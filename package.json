@@ -1,0 +1,8 @@
+{
+  "name": "babelsheet2",
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  }
+}
