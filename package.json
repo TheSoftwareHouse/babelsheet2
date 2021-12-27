@@ -1,5 +1,8 @@
 {
   "name": "babelsheet2",
+  "scripts": {
+    "postinstall": "(cd packages/reader/node_modules; ln -sn ../../../node_modules/.bin .bin) || true"
+  },
   "workspaces": {
     "packages": [
       "packages/*"
