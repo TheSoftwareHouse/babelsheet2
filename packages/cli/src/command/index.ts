@@ -1,5 +1,5 @@
-import {initCommand} from "./init";
-import {editCommand} from "./edit";
+import { initCommand } from './init';
+import { editCommand } from './edit';
 
 export interface Command {
   name: string;

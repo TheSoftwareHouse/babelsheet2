@@ -1,4 +1,4 @@
-import {GoogleSpreadsheet, ServiceAccountCredentials} from "google-spreadsheet";
+import { GoogleSpreadsheet, ServiceAccountCredentials } from 'google-spreadsheet';
 
 export type SpreadsheetSourceConfig = {
   spreadsheetId: string;
@@ -12,7 +12,7 @@ export type Row = CellValue[];
 
 const ROWS_BATCH_SIZE = 50;
 
-export async function *spreadsheetRowsIterator({
+export async function* spreadsheetRowsIterator({
   spreadsheetId,
   sheetIndex = 0,
   credentials,
@@ -30,6 +30,7 @@ export async function *spreadsheetRowsIterator({
     const endRowIndex = Math.min((page + 1) * ROWS_BATCH_SIZE, sheet.rowCount);
     const endColumnIndex = sheet.columnCount - 1;
 
+    // eslint-disable-next-line no-await-in-loop
     await sheet.loadCells({
       startColumnIndex: 0,
       startRowIndex,

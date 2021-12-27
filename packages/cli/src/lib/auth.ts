@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
-import { JWTInput } from "google-auth-library";
-import {google} from "googleapis";
+import type { JWTInput } from 'google-auth-library';
+import { google } from 'googleapis';
 
 const CREDENTIALS_FILE_REQUIRED_KEYS = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email', 'client_id', 'auth_uri', 'token_uri', 'auth_provider_x509_cert_url', 'client_x509_cert_url'];
 
@@ -14,17 +14,18 @@ export async function parseCredentialsFile(filePath: string) {
   let parsedContent: any;
   try {
     parsedContent = JSON.parse(fileBuffer.toString());
+    // eslint-disable-next-line no-empty
   } catch {}
 
   if (
-    !parsedContent ||
-    typeof parsedContent !== "object" ||
-    CREDENTIALS_FILE_REQUIRED_KEYS.some(key => typeof (parsedContent as any)[key] !== "string")
+    !parsedContent
+    || typeof parsedContent !== 'object'
+    || CREDENTIALS_FILE_REQUIRED_KEYS.some((key) => typeof (parsedContent as any)[key] !== 'string')
   ) {
-    throw new Error("Invalid credentials file format");
+    throw new Error('Invalid credentials file format');
   }
 
-  if (parsedContent.type !== "service_account") {
+  if (parsedContent.type !== 'service_account') {
     throw new Error('Only "service_account" type credentials are supported');
   }
 

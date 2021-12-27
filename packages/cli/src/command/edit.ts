@@ -1,11 +1,11 @@
-import {Command} from "./index";
-import {isBabelsheetInitialized} from "../lib/user-project";
-import open from "open";
-import path from "path";
+import open from 'open';
+import path from 'path';
+import { isBabelsheetInitialized } from '../lib/user-project';
+import { Command } from './index';
 
 export const editCommand: Command = {
-  name: "edit",
-  description: "Opens translations Spreadsheet",
+  name: 'edit',
+  description: 'Opens translations Spreadsheet',
   handler,
 };
 
@@ -16,7 +16,8 @@ async function handler() {
     return;
   }
 
-  const { spreadsheetId } = require(path.join(process.cwd(), "babelsheet.json"));
+  // eslint-disable-next-line global-require,import/no-dynamic-require
+  const { spreadsheetId } = require(path.join(process.cwd(), 'babelsheet.json'));
 
   await open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`);
 }

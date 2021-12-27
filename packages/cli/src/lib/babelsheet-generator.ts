@@ -1,7 +1,12 @@
-import { GoogleAuth } from "./auth";
-import {google, sheets_v4} from "googleapis";
+// eslint-disable-next-line camelcase
+import { google, sheets_v4 } from 'googleapis';
+import { GoogleAuth } from './auth';
+
+// eslint-disable-next-line camelcase
 import Schema$CellData = sheets_v4.Schema$CellData;
+// eslint-disable-next-line camelcase
 import Schema$Color = sheets_v4.Schema$Color;
+// eslint-disable-next-line camelcase
 import Schema$RowData = sheets_v4.Schema$RowData;
 
 export type BabelsheetConfig = {
@@ -23,7 +28,7 @@ export async function createBabelsheet({
 }: BabelsheetConfig) {
   return google.sheets({
     auth,
-    version: "v4",
+    version: 'v4',
   }).spreadsheets.create({
     requestBody: {
       properties: {
@@ -32,9 +37,9 @@ export async function createBabelsheet({
       sheets: [
         {
           properties: {
-            title: "Translations",
+            title: 'Translations',
             gridProperties: {
-              frozenRowCount: includeManual ? 5 : 1
+              frozenRowCount: includeManual ? 5 : 1,
             },
           },
           data: [
@@ -42,70 +47,76 @@ export async function createBabelsheet({
               rowData: [
                 ...(includeManual ? generateUserManualHeaderRows(maxTranslationKeyLevel) : []),
                 generateMainHeaderRow(maxTranslationKeyLevel, languages),
-                ...(includeExample ? generateExampleRows(maxTranslationKeyLevel, languages) : [])
+                ...(includeExample ? generateExampleRows(maxTranslationKeyLevel, languages) : []),
               ],
             },
           ],
-        }
-      ]
+        },
+      ],
     },
   });
 }
 
-const generateExampleRows = (maxTranslationKeyLevel: number, languages: string[]): Schema$RowData[] => {
+const generateExampleRows = (
+  maxTranslationKeyLevel: number,
+  languages: string[],
+): Schema$RowData[] => {
   const examples: [string, string][] = [
-    ["common.ok", "Ok"],
-    ["common.cancel", "Cancel"],
-    ["common.error.unknown", "Unknown error. Please try again later"],
-    ["login.email", "E-mail"],
-    ["login.password", "Password"],
-    ["login.signin", "Sign in"],
-    ["login.signup", "Sign up"],
+    ['common.ok', 'Ok'],
+    ['common.cancel', 'Cancel'],
+    ['common.error.unknown', 'Unknown error. Please try again later'],
+    ['login.email', 'E-mail'],
+    ['login.password', 'Password'],
+    ['login.signin', 'Sign in'],
+    ['login.signup', 'Sign up'],
   ];
-  const otherLanguageTranslationPlaceholder = "PROVIDE TRANSLATION";
+  const otherLanguageTranslationPlaceholder = 'PROVIDE TRANSLATION';
   let lastPath: string[] = [];
 
   return examples.flatMap(
-    example => {
-      const keyPath = example[0].split(".", maxTranslationKeyLevel);
+    (example) => {
+      const keyPath = example[0].split('.', maxTranslationKeyLevel);
       const translation = example[1];
 
       const languageTranslationCells = languages.map(
-        languageCode => textCell(
-          ["en", "us"].includes(languageCode)
+        (languageCode) => textCell(
+          ['en', 'us'].includes(languageCode)
             ? translation
-            : otherLanguageTranslationPlaceholder
-        )
+            : otherLanguageTranslationPlaceholder,
+        ),
       );
 
       const rows = keyPath
         .flatMap((pathNode, index) => (lastPath[index] !== pathNode ? [{
           values: [
             // tag
-            textCell(""),
+            textCell(''),
             // translation key path current level padding
-            ...fillCells(index, textCell("")),
+            ...fillCells(index, textCell('')),
             // translation key
             textCell(pathNode),
             // padding between translation key and language translations
-            ...fillCells(maxTranslationKeyLevel - index - 1, textCell("")),
+            ...fillCells(maxTranslationKeyLevel - index - 1, textCell('')),
             // language translations
             ...(index === keyPath.length - 1 ? languageTranslationCells : []),
-          ]
+          ],
         }] : []));
 
       lastPath = keyPath;
 
       return rows;
-    }
+    },
   );
-}
+};
 
-const generateMainHeaderRow = (maxTranslationKeyLevel: number, languages: string[]): Schema$RowData => ({
+const generateMainHeaderRow = (
+  maxTranslationKeyLevel: number,
+  languages: string[],
+): Schema$RowData => ({
   values: [
-    boldCell("###"),
-    ...fillCells(maxTranslationKeyLevel, boldCell(">>>")),
-    ...languages.map(language => boldCell(language)),
+    boldCell('###'),
+    ...fillCells(maxTranslationKeyLevel, boldCell('>>>')),
+    ...languages.map((language) => boldCell(language)),
   ],
 });
 
@@ -114,15 +125,15 @@ const generateUserManualHeaderRows = (maxTranslationKeyLevel: number): Schema$Ro
   {
     values: [
       highlightedCell(),
-      highlightedCell("These columns are the list of translation keys and"),
+      highlightedCell('These columns are the list of translation keys and'),
       ...fillCells(maxTranslationKeyLevel - 1, highlightedCell()),
-      textCell("Please edit translation here."),
-    ]
+      textCell('Please edit translation here.'),
+    ],
   },
   {
     values: [
       highlightedCell(),
-      highlightedCell("can only be edited by the dev team."),
+      highlightedCell('can only be edited by the dev team.'),
       ...fillCells(maxTranslationKeyLevel - 1, highlightedCell()),
     ],
   },
@@ -147,8 +158,8 @@ const textCell = (content: string): Schema$CellData => ({
 const highlightedCell = (content?: string): Schema$CellData => ({
   ...content !== undefined ? {
     userEnteredValue: {
-      stringValue: content
-    }
+      stringValue: content,
+    },
   } : {},
   userEnteredFormat: {
     backgroundColor: highlightColor,
@@ -157,9 +168,9 @@ const highlightedCell = (content?: string): Schema$CellData => ({
 
 const boldCell = (content: string): Schema$CellData => ({
   userEnteredValue: {
-    stringValue: content
+    stringValue: content,
   },
-  textFormatRuns: [{ format: { bold: true }}],
+  textFormatRuns: [{ format: { bold: true } }],
 });
 
 const fillCells = (count: number, cell: Schema$CellData) => Array(count).fill(cell);

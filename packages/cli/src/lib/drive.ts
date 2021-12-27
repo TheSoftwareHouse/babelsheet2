@@ -1,9 +1,9 @@
-import {google} from "googleapis";
-import {GoogleAuth} from "./auth";
+import { google } from 'googleapis';
+import { GoogleAuth } from './auth';
 
 export type FileShareConfig = {
   auth: GoogleAuth;
-  role: "writer",
+  role: 'writer',
   fileId: string;
   email: string;
   sendNotificationEmail?: boolean;
@@ -18,10 +18,10 @@ export async function shareFileWithEmail({
 }: FileShareConfig) {
   await google.drive({
     auth,
-    version: "v3",
+    version: 'v3',
   }).permissions.create({
     requestBody: {
-      type: "user",
+      type: 'user',
       emailAddress: email,
       role,
     },

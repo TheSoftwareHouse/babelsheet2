@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 
-'use strict';
-
-import {commands} from "./command";
+import { commands } from './command';
 
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
-  console.log("Type: babelsheet2 <command>\n");
-  console.log("Available commands:");
+  console.log('Type: babelsheet2 <command>\n');
+  console.log('Available commands:');
   commands.forEach(
-    command => console.log(`${command.name} - ${command.description}`)
+    (command) => console.log(`${command.name} - ${command.description}`),
   );
 
   process.exit(0);

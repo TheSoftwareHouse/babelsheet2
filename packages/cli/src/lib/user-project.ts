@@ -1,10 +1,11 @@
-import {promises as fs} from "fs";
-import path from "path";
-import util from "util";
-import {fileExists} from "./file-helpers";
+import { promises as fs } from 'fs';
+import path from 'path';
+import util from 'util';
+import { fileExists } from './file-helpers';
+
 const exec = util.promisify(require('child_process').exec);
 
-const BABELSHEET_CONFIG_FILE_NAME = "babelsheet.json";
+const BABELSHEET_CONFIG_FILE_NAME = 'babelsheet.json';
 
 type BabelsheetConfig = {
   cliVersion: string;
@@ -18,13 +19,12 @@ type DependencyToInstall = {
   packageName: string;
 };
 
-
 export async function resolveAppTitle() {
-  const packageJsonPath = path.join(process.cwd(), "package.json");
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
   const packageJsonExists = await fileExists(packageJsonPath);
 
   if (!packageJsonExists) {
-    return;
+    return undefined;
   }
 
   const packageJsonBuffer = await fs.readFile(packageJsonPath);
@@ -32,13 +32,13 @@ export async function resolveAppTitle() {
   try {
     const parsedPackageJson = JSON.parse(packageJsonBuffer.toString());
 
-    if (typeof parsedPackageJson["name"] !== "string") {
-      return;
+    if (typeof parsedPackageJson.name !== 'string') {
+      return undefined;
     }
 
     return (parsedPackageJson as any).name as string;
   } catch {
-    return;
+    return undefined;
   }
 }
 
@@ -47,7 +47,9 @@ export async function isBabelsheetInitialized() {
   return fileExists(babelsheetConfigFilePath);
 }
 
-export async function saveBabelsheetConfig({ spreadsheetId, credentialsFile, userInput, cliVersion }: BabelsheetConfig) {
+export async function saveBabelsheetConfig({
+  spreadsheetId, credentialsFile, userInput, cliVersion,
+}: BabelsheetConfig) {
   await fs.writeFile(BABELSHEET_CONFIG_FILE_NAME, JSON.stringify({
     cliVersion,
     spreadsheetId,
@@ -57,7 +59,7 @@ export async function saveBabelsheetConfig({ spreadsheetId, credentialsFile, use
 }
 
 export async function listDependencies() {
-  const packageJsonPath = path.join(process.cwd(), "package.json");
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
   const packageJsonExists = await fileExists(packageJsonPath);
 
   if (!packageJsonExists) {
@@ -73,34 +75,40 @@ export async function listDependencies() {
   } catch {
     return [];
   }
-
 }
 
 export async function installDependencies(dependencies: DependencyToInstall[]) {
   const existingDeps = await listDependencies();
-  const missingDependencies = dependencies.filter(({ packageName }) => !existingDeps.includes(packageName));
+  const missingDependencies = dependencies.filter(
+    ({ packageName }) => !existingDeps.includes(packageName),
+  );
 
-  const deps = missingDependencies.filter(({ dev }) => !dev).map(({ packageName}) => packageName);
-  const devDeps = missingDependencies.filter(({ dev }) => dev).map(({ packageName}) => packageName);
+  const deps = missingDependencies
+    .filter(({ dev }) => !dev)
+    .map(({ packageName }) => packageName);
+  const devDeps = missingDependencies
+    .filter(({ dev }) => dev)
+    .map(({ packageName }) => packageName);
 
   if (deps) {
-    await exec(`npm i ${deps.join(" ")}`);
+    await exec(`npm i ${deps.join(' ')}`);
   }
 
   if (devDeps) {
-    await exec(`npm i -D ${devDeps.join(" ")}`);
+    await exec(`npm i -D ${devDeps.join(' ')}`);
   }
 }
 
 export async function registerScript(name: string, command: string) {
-  const packageJsonPath = path.join(process.cwd(), "package.json");
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
   const packageJsonExists = await fileExists(packageJsonPath);
 
   if (!packageJsonExists) {
-    throw new Error("package.json does not exist");
+    throw new Error('package.json does not exist');
   }
 
-  const packageJsonContent = await fs.readFile(packageJsonPath).then(content => JSON.parse(content.toString()));
+  const packageJsonContent = await fs.readFile(packageJsonPath)
+    .then((content) => JSON.parse(content.toString()));
 
   if (!packageJsonContent.scripts) {
     packageJsonContent.scripts = {};
