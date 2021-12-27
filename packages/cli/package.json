@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Babelsheet2 CLI",
   "main": "dist/index.js",
   "scripts": {
