@@ -22,4 +22,9 @@ if (!command) {
   process.exit(1);
 }
 
-command.handler();
+command.handler().catch(
+  (error) => {
+    console.error(error.message);
+    process.exit(1);
+  },
+);

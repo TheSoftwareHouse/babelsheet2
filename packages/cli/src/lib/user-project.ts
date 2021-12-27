@@ -19,15 +19,18 @@ type DependencyToInstall = {
   packageName: string;
 };
 
-export async function resolveAppTitle() {
-  const packageJsonPath = path.join(process.cwd(), 'package.json');
-  const packageJsonExists = await fileExists(packageJsonPath);
+const resolvePackageJsonPath = () => path.join(process.cwd(), 'package.json');
 
-  if (!packageJsonExists) {
+export async function hasPackageJson() {
+  return fileExists(resolvePackageJsonPath());
+}
+
+export async function resolveAppTitle() {
+  if (!await hasPackageJson()) {
     return undefined;
   }
 
-  const packageJsonBuffer = await fs.readFile(packageJsonPath);
+  const packageJsonBuffer = await fs.readFile(resolvePackageJsonPath());
 
   try {
     const parsedPackageJson = JSON.parse(packageJsonBuffer.toString());
@@ -58,15 +61,28 @@ export async function saveBabelsheetConfig({
   }, null, 2));
 }
 
-export async function listDependencies() {
-  const packageJsonPath = path.join(process.cwd(), 'package.json');
-  const packageJsonExists = await fileExists(packageJsonPath);
+export async function initPackageJson() {
+  if (await hasPackageJson()) {
+    return;
+  }
 
-  if (!packageJsonExists) {
+  const proposedPackageName = path.basename(process.cwd());
+
+  await fs.writeFile(resolvePackageJsonPath(), JSON.stringify({
+    name: proposedPackageName,
+    description: '',
+    version: '1.0.0',
+    dependencies: {},
+    devDependencies: {},
+  }, null, 2));
+}
+
+export async function listDependencies() {
+  if (!await hasPackageJson()) {
     return [];
   }
 
-  const packageJsonBuffer = await fs.readFile(packageJsonPath);
+  const packageJsonBuffer = await fs.readFile(resolvePackageJsonPath());
 
   try {
     const parsedPackageJson = JSON.parse(packageJsonBuffer.toString());
@@ -100,13 +116,11 @@ export async function installDependencies(dependencies: DependencyToInstall[]) {
 }
 
 export async function registerScript(name: string, command: string) {
-  const packageJsonPath = path.join(process.cwd(), 'package.json');
-  const packageJsonExists = await fileExists(packageJsonPath);
-
-  if (!packageJsonExists) {
+  if (!await hasPackageJson()) {
     throw new Error('package.json does not exist');
   }
 
+  const packageJsonPath = resolvePackageJsonPath();
   const packageJsonContent = await fs.readFile(packageJsonPath)
     .then((content) => JSON.parse(content.toString()));
 

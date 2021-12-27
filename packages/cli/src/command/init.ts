@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import { authorize, parseCredentialsFile } from '../lib/auth';
 import { scriptTemplates } from '../script-template';
 import {
+  hasPackageJson, initPackageJson,
   installDependencies,
   isBabelsheetInitialized,
   registerScript,
@@ -24,9 +25,25 @@ export const initCommand: Command = {
 
 async function handler() {
   if (await isBabelsheetInitialized()) {
-    console.error('Babelsheet has been already set up in this project.');
+    throw new Error('Babelsheet has been already set up in this project.');
+  }
 
-    return;
+  if (!await hasPackageJson()) {
+    const { confirmPackageJsonCreation } = await inquirer.prompt([
+      {
+        name: 'confirmPackageJsonCreation',
+        type: 'confirm',
+        message: '⚠️ There is no "package.json" in the current working directory. Would you like to initialize one?',
+      },
+    ]);
+
+    if (!confirmPackageJsonCreation) {
+      throw new Error('Babelsheet2 cannot continue the initialization without "package.json" file.');
+    }
+
+    await initPackageJson();
+
+    console.log('Minimalistic "package.json" file has been created.');
   }
 
   const appTitle = await resolveAppTitle();

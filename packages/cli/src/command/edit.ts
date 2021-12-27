@@ -11,9 +11,7 @@ export const editCommand: Command = {
 
 async function handler() {
   if (!await isBabelsheetInitialized()) {
-    console.error("Babelsheet2 hasn't been initialized for this project.");
-
-    return;
+    throw new Error("Babelsheet2 hasn't been initialized for this project.");
   }
 
   // eslint-disable-next-line global-require,import/no-dynamic-require
