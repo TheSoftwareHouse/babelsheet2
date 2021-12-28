@@ -1,5 +1,6 @@
 import { initCommand } from './init';
 import { editCommand } from './edit';
+import { uninstallCommand } from './uninstall';
 
 export interface Command {
   name: string;
@@ -10,4 +11,5 @@ export interface Command {
 export const commands: Command[] = [
   initCommand,
   editCommand,
+  uninstallCommand,
 ];

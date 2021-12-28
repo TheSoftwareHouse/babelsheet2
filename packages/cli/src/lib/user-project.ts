@@ -77,7 +77,9 @@ export async function initPackageJson() {
   }, null, 2));
 }
 
-export async function listDependencies() {
+export async function listDependencies(
+  { devDependencies = false }: { devDependencies?: boolean } = {},
+) {
   if (!await hasPackageJson()) {
     return [];
   }
@@ -87,10 +89,14 @@ export async function listDependencies() {
   try {
     const parsedPackageJson = JSON.parse(packageJsonBuffer.toString());
 
-    return Object.keys(parsedPackageJson.dependencies);
+    return Object.keys(parsedPackageJson[devDependencies ? 'devDependencies' : 'dependencies']);
   } catch {
     return [];
   }
+}
+
+export async function removeDependencies(dependencies: string[]) {
+  await exec(`npm remove ${dependencies.join(' ')}`);
 }
 
 export async function installDependencies(dependencies: DependencyToInstall[]) {
@@ -129,6 +135,24 @@ export async function registerScript(name: string, command: string) {
   }
 
   packageJsonContent.scripts[name] = command;
+
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2));
+}
+
+export async function unregisterScript(name: string) {
+  if (!await hasPackageJson()) {
+    throw new Error('package.json does not exist');
+  }
+
+  const packageJsonPath = resolvePackageJsonPath();
+  const packageJsonContent = await fs.readFile(packageJsonPath)
+    .then((content) => JSON.parse(content.toString()));
+
+  if (!packageJsonContent.scripts?.[name]) {
+    return;
+  }
+
+  delete packageJsonContent.scripts[name];
 
   await fs.writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2));
 }

@@ -9,6 +9,11 @@ export type FileShareConfig = {
   sendNotificationEmail?: boolean;
 }
 
+export type DeleteDriveFileConfig = {
+  auth: GoogleAuth;
+  fileId: string;
+};
+
 export async function shareFileWithEmail({
   auth,
   role,
@@ -27,5 +32,14 @@ export async function shareFileWithEmail({
     },
     fileId,
     sendNotificationEmail,
+  });
+}
+
+export async function deleteDriveFile({
+  auth,
+  fileId,
+}: DeleteDriveFileConfig) {
+  await google.drive({ auth, version: 'v3' }).files.delete({
+    fileId,
   });
 }
