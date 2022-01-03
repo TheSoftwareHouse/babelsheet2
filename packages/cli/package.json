@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -Rf ./dist",
-    "build": "npm run clean && tsc && cp src/script-template/*.template dist/script-template/",
-    "prepublishOnly": "npm run build",
+    "build": "tsc && cp src/script-template/*.template dist/script-template/",
+    "prepublishOnly": "npm run clean && npm run build",
     "lint": "eslint --fix src/**/*.ts"
   },
   "bin": {
@@ -20,9 +20,11 @@
     "i18n"
   ],
   "dependencies": {
+    "babelsheet2-reader": "^0.0.2",
     "googleapis": "^92.0.0",
     "inquirer": "^8.2.0",
-    "open": "^8.4.0"
+    "open": "^8.4.0",
+    "rxjs": "^7.5.1"
   },
   "devDependencies": {
     "@types/inquirer": "^8.1.3",

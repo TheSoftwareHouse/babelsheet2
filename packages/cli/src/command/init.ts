@@ -14,6 +14,7 @@ import { shareFileWithEmail } from '../lib/drive';
 import { generateScript } from '../lib/script-generator';
 import { fileExists } from '../lib/file-helpers';
 import { Command } from './index';
+import { isBabelsheetCompliantSpreadsheet } from '../lib/babelsheet-validator';
 
 const GOOGLE_ACCOUNT_SETUP_TUTORIAL_URL = 'https://github.com/TheSoftwareHouse/babelsheet2#-prerequisites';
 
@@ -61,6 +62,34 @@ async function handler() {
     },
   ]);
   const simpleMode = difficultyChoice.includes('Simple');
+
+  const { existingSpreadsheet } : { existingSpreadsheet: string } = await inquirer.prompt([
+    {
+      name: 'existingSpreadsheet',
+      type: 'input',
+      message: '🔗 Paste existing Babelsheet-compatible spreadsheet url or id. If you want to initialize a new one, just leave this blank and press enter.',
+      default: '',
+      validate(input: string) {
+        if (!input) {
+          return true;
+        }
+
+        try {
+          const parsedURL = new URL(input);
+
+          if (parsedURL.origin !== 'https://docs.google.com' || !parsedURL.pathname.startsWith('/spreadsheets/d/')) {
+            return 'Invalid Spreadsheet URL';
+          }
+        } catch (error) {
+          if (!/^[-_0-9A-Za-z]{44}$/.test(input)) {
+            return 'Invalid Spreadsheet ID';
+          }
+        }
+
+        return true;
+      },
+    },
+  ], simpleMode ? { existingSpreadsheet: '' } : {});
 
   const answers: {
     credentials: string;
@@ -160,16 +189,26 @@ async function handler() {
       message: '⌨️ Which "npm run" command you would like to type to run translation fetching',
       default: 'translations',
     },
-  ], simpleMode ? {
-    ...(await fileExists('.credentials.json') ? { credentials: '.credentials.json' } : {}),
-    title: defaultSpreadsheetTitle,
-    includeManual: true,
-    maxLevels: 5,
-    outDir: './i18n/',
-    scriptPath: './scripts/fetch-translations.ts',
-    scriptName: 'translations',
-    example: true,
-  } : {});
+  ], {
+    ...(simpleMode && {
+      ...(await fileExists('.credentials.json') ? { credentials: '.credentials.json' } : {}),
+      title: defaultSpreadsheetTitle,
+      includeManual: true,
+      maxLevels: 5,
+      outDir: './i18n/',
+      scriptPath: './scripts/fetch-translations.ts',
+      scriptName: 'translations',
+      example: true,
+    }),
+    ...(existingSpreadsheet && {
+      title: '',
+      includeManual: false,
+      maxLevels: 0,
+      email: '',
+      example: false,
+      languages: '',
+    }),
+  });
 
   console.log('Authorizing with Google API using provided credentials...');
   const credentials = await parseCredentialsFile(answers.credentials);
@@ -183,30 +222,51 @@ async function handler() {
     .filter((entry) => entry.trim().length > 0)
     .map((languageCode) => languageCode.trim());
 
-  console.log('Creating Google Spreadsheet...');
-  const googleSpreadsheetResponse = await createBabelsheet({
-    auth,
-    languages,
-    maxTranslationKeyLevel: answers.maxLevels,
-    includeManual: answers.includeManual,
-    includeExample: answers.example,
-    title: answers.title,
-  });
+  let spreadsheetId: string;
+  let spreadsheetUrl: string;
 
-  const { spreadsheetId, spreadsheetUrl } = googleSpreadsheetResponse.data;
+  if (!existingSpreadsheet) {
+    console.log('Creating Google Spreadsheet...');
+    const googleSpreadsheetResponse = await createBabelsheet({
+      auth,
+      languages,
+      maxTranslationKeyLevel: answers.maxLevels,
+      includeManual: answers.includeManual,
+      includeExample: answers.example,
+      title: answers.title,
+    });
 
-  if (!spreadsheetId) {
-    throw new Error('Error while creating spreadsheet');
+    if (
+      !googleSpreadsheetResponse.data.spreadsheetId
+      || !googleSpreadsheetResponse.data.spreadsheetUrl) {
+      throw new Error('Error while creating spreadsheet');
+    }
+
+    spreadsheetId = googleSpreadsheetResponse.data.spreadsheetId;
+    spreadsheetUrl = googleSpreadsheetResponse.data.spreadsheetUrl;
+
+    console.log(`Sharing Spreadsheet with ${answers.email}...`);
+    await shareFileWithEmail({
+      auth,
+      role: 'writer',
+      email: answers.email,
+      fileId: spreadsheetId,
+      sendNotificationEmail: true,
+    });
+  } else {
+    spreadsheetUrl = existingSpreadsheet.length === 44
+      ? `https://docs.google.com/spreadsheets/d/${existingSpreadsheet}`
+      : existingSpreadsheet;
+
+    // eslint-disable-next-line prefer-destructuring
+    spreadsheetId = spreadsheetUrl.split('/')[5];
+
+    console.log(`Validating ${spreadsheetUrl} spreadsheet structure...`);
+
+    if (!await isBabelsheetCompliantSpreadsheet({ spreadsheetId, credentials })) {
+      throw new Error(`Spreadsheet "${spreadsheetUrl}" does not seem to have Babelsheet-compliant format`);
+    }
   }
-
-  console.log(`Sharing Spreadsheet with ${answers.email}...`);
-  await shareFileWithEmail({
-    auth,
-    role: 'writer',
-    email: answers.email,
-    fileId: spreadsheetId,
-    sendNotificationEmail: true,
-  });
 
   await saveBabelsheetConfig({
     // eslint-disable-next-line global-require
