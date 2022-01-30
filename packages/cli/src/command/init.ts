@@ -2,9 +2,9 @@ import inquirer from 'inquirer';
 import { authorize, parseCredentialsFile } from '../lib/auth';
 import { scriptTemplates } from '../script-template';
 import {
+  getBabelsheetInitState,
   hasPackageJson, initPackageJson,
   installDependencies,
-  isBabelsheetInitialized,
   registerScript,
   resolveAppTitle,
   saveBabelsheetConfig,
@@ -25,7 +25,9 @@ export const initCommand: Command = {
 };
 
 async function handler() {
-  if (await isBabelsheetInitialized()) {
+  const babelsheetConfigState = await getBabelsheetInitState();
+
+  if (babelsheetConfigState.init) {
     throw new Error('Babelsheet has been already set up in this project.');
   }
 
@@ -208,6 +210,7 @@ async function handler() {
       example: false,
       languages: '',
     }),
+    ...babelsheetConfigState.boilerplateConfig,
   });
 
   console.log('Authorizing with Google API using provided credentials...');
@@ -215,6 +218,14 @@ async function handler() {
   const auth = await authorize(credentials, [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive',
+  ]);
+
+  console.log('Installing dev dependencies...');
+  await installDependencies([
+    { dev: true, packageName: 'babelsheet2-reader' },
+    { dev: true, packageName: 'babelsheet2-json-writer' },
+    { dev: true, packageName: 'ts-node' },
+    { dev: true, packageName: 'rxjs' },
   ]);
 
   const languages = answers.languages
@@ -276,14 +287,6 @@ async function handler() {
     userInput: answers,
   });
 
-  console.log('Installing dev dependencies...');
-  await installDependencies([
-    { dev: true, packageName: 'babelsheet2-reader' },
-    { dev: true, packageName: 'babelsheet2-json-writer' },
-    { dev: true, packageName: 'ts-node' },
-    { dev: true, packageName: 'rxjs' },
-  ]);
-
   const scriptTemplateFileName = scriptTemplates.find(
     ({ title }) => title === answers.scriptTemplate,
   )!.fileName;
@@ -293,7 +296,7 @@ async function handler() {
     '{{OUT_DIR_PATH}}': answers.outDir.endsWith('/') ? answers.outDir : `${answers.outDir}/`,
   });
 
-  await registerScript(answers.scriptName, `ts-node ${answers.scriptPath}`);
+  await registerScript(answers.scriptName, `ts-node -T --skip-project ${answers.scriptPath}`);
 
   console.log('\n🎉 Babelsheet has been successfully initialized! 🎉\n');
   console.log(`📝 Translation spreadsheet is available here: ${spreadsheetUrl}`);

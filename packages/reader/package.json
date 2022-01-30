@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2-reader",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "Rx.js observable that parses Babelsheet-formatted Google Spreadsheet",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,7 +23,7 @@
     "lodash.setwith": "^4.3.2"
   },
   "peerDependencies": {
-    "rxjs": "^7.4.0"
+    "rxjs": ">=6.0.0"
   },
   "devDependencies": {
     "@types/google-spreadsheet": "^3.1.5",

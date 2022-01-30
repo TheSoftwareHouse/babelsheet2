@@ -1,14 +1,16 @@
 import {
   from,
   scan,
-  mergeMap,
   defer,
   map,
   filter,
   Observable,
-  mergeAll,
   takeWhile,
 } from 'rxjs';
+import {
+  mergeMap,
+  mergeAll,
+} from 'rxjs/operators';
 import {
   CellValue, Row, spreadsheetRowsIterator, SpreadsheetSourceConfig,
 } from './spreadsheet-rows-iterator';

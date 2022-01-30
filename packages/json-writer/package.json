@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2-json-writer",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Babelsheet2 JSON file writer",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
     "lodash.setwith": "^4.3.2"
   },
   "peerDependencies": {
-    "rxjs": "^7.4.0"
+    "rxjs": ">=6.0.0"
   },
   "devDependencies": {
     "@types/lodash.setwith": "^4.3.6",

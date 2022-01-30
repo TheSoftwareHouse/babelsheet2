@@ -12,12 +12,18 @@ type BabelsheetConfig = {
   spreadsheetId: string;
   credentialsFile: string;
   userInput: Record<string, unknown>;
+  boilerplate?: boolean;
 };
 
 type DependencyToInstall = {
   dev: boolean;
   packageName: string;
+  version?: string;
 };
+
+export type BabelsheetInitState =
+  | { init: true }
+  | { init: false; boilerplateConfig?: Partial<BabelsheetConfig> };
 
 const resolvePackageJsonPath = () => path.join(process.cwd(), 'package.json');
 
@@ -45,9 +51,43 @@ export async function resolveAppTitle() {
   }
 }
 
+const getBabelsheetConfigFilePath = () => path.join(process.cwd(), BABELSHEET_CONFIG_FILE_NAME);
+
 export async function isBabelsheetInitialized() {
-  const babelsheetConfigFilePath = path.join(process.cwd(), BABELSHEET_CONFIG_FILE_NAME);
-  return fileExists(babelsheetConfigFilePath);
+  const initState = await getBabelsheetInitState();
+
+  return initState.init;
+}
+
+export async function getBabelsheetInitState(): Promise<BabelsheetInitState> {
+  const babelsheetConfigFilePath = getBabelsheetConfigFilePath();
+
+  if (!await fileExists(babelsheetConfigFilePath)) {
+    return { init: false };
+  }
+
+  try {
+    const babelsheetConfig = await loadBabelsheetConfig();
+
+    if (babelsheetConfig.boilerplate) {
+      return {
+        init: false,
+        boilerplateConfig: babelsheetConfig.userInput,
+      };
+    }
+    // eslint-disable-next-line no-empty
+  } catch (error) {}
+
+  return {
+    init: true,
+  };
+}
+
+export async function loadBabelsheetConfig(): Promise<Partial<BabelsheetConfig>> {
+  const babelsheetConfigFilePath = getBabelsheetConfigFilePath();
+  const babelsheetConfigRaw = await fs.readFile(babelsheetConfigFilePath);
+
+  return JSON.parse(babelsheetConfigRaw.toString());
 }
 
 export async function saveBabelsheetConfig({
@@ -104,13 +144,18 @@ export async function installDependencies(dependencies: DependencyToInstall[]) {
   const missingDependencies = dependencies.filter(
     ({ packageName }) => !existingDeps.includes(packageName),
   );
+  const dependencyToString = ({ packageName, version }: DependencyToInstall): string => (
+    version
+      ? `${packageName}@${version}`
+      : packageName
+  );
 
   const deps = missingDependencies
     .filter(({ dev }) => !dev)
-    .map(({ packageName }) => packageName);
+    .map(dependencyToString);
   const devDeps = missingDependencies
     .filter(({ dev }) => dev)
-    .map(({ packageName }) => packageName);
+    .map(dependencyToString);
 
   if (deps) {
     await exec(`npm i ${deps.join(' ')}`);
