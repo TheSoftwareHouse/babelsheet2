@@ -13,6 +13,7 @@ type BabelsheetConfig = {
   credentialsFile: string;
   userInput: Record<string, unknown>;
   boilerplate?: boolean;
+  exampleRows?: [string, string][];
 };
 
 type DependencyToInstall = {

@@ -244,6 +244,7 @@ async function handler() {
       maxTranslationKeyLevel: answers.maxLevels,
       includeManual: answers.includeManual,
       includeExample: answers.example,
+      exampleRows: babelsheetConfigState?.boilerplateConfig?.exampleRows,
       title: answers.title,
     });
 

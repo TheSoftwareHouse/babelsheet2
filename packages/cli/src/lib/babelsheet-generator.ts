@@ -16,6 +16,7 @@ export type BabelsheetConfig = {
   languages: string[];
   includeManual: boolean;
   includeExample: boolean;
+  exampleRows?: [string, string][];
 };
 
 export async function createBabelsheet({
@@ -25,6 +26,7 @@ export async function createBabelsheet({
   languages,
   includeManual,
   includeExample,
+  exampleRows,
 }: BabelsheetConfig) {
   return google.sheets({
     auth,
@@ -47,7 +49,10 @@ export async function createBabelsheet({
               rowData: [
                 ...(includeManual ? generateUserManualHeaderRows(maxTranslationKeyLevel) : []),
                 generateMainHeaderRow(maxTranslationKeyLevel, languages),
-                ...(includeExample ? generateExampleRows(maxTranslationKeyLevel, languages) : []),
+                ...(includeExample
+                  ? generateExampleRows(maxTranslationKeyLevel, languages, exampleRows)
+                  : []
+                ),
               ],
             },
           ],
@@ -60,8 +65,7 @@ export async function createBabelsheet({
 const generateExampleRows = (
   maxTranslationKeyLevel: number,
   languages: string[],
-): Schema$RowData[] => {
-  const examples: [string, string][] = [
+  exampleRows: [string, string][] = [
     ['common.ok', 'Ok'],
     ['common.cancel', 'Cancel'],
     ['common.error.unknown', 'Unknown error. Please try again later'],
@@ -69,22 +73,24 @@ const generateExampleRows = (
     ['login.password', 'Password'],
     ['login.signin', 'Sign in'],
     ['login.signup', 'Sign up'],
-  ];
+  ],
+): Schema$RowData[] => {
   const otherLanguageTranslationPlaceholder = 'PROVIDE TRANSLATION';
   let lastPath: string[] = [];
 
-  return examples.flatMap(
+  return exampleRows.flatMap(
     (example) => {
       const keyPath = example[0].split('.', maxTranslationKeyLevel);
       const translation = example[1];
 
-      const languageTranslationCells = languages.map(
-        (languageCode) => textCell(
-          ['en', 'us'].includes(languageCode)
-            ? translation
-            : otherLanguageTranslationPlaceholder,
-        ),
-      );
+      const languageTranslationCells = example.length === 2
+        ? languages.map(
+          (languageCode) => textCell(
+            ['en', 'us'].includes(languageCode)
+              ? translation
+              : otherLanguageTranslationPlaceholder,
+          ),
+        ) : example.slice(1).map(textCell);
 
       const rows = keyPath
         .flatMap((pathNode, index) => (lastPath[index] !== pathNode ? [{

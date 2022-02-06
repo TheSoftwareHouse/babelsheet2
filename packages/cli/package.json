@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2",
-  "version": "0.0.7",
+  "version": "0.0.11",
   "description": "Babelsheet2 CLI",
   "main": "dist/index.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "i18n"
   ],
   "dependencies": {
+    "babelsheet2": "^0.0.8",
     "babelsheet2-reader": "^0.0.5",
     "googleapis": "^92.0.0",
     "inquirer": "^8.2.0",
