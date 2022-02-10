@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import readline from 'readline';
 import { authorize, parseCredentialsFile } from '../lib/auth';
 import { scriptTemplates } from '../script-template';
 import {
@@ -17,6 +18,20 @@ import { Command } from './index';
 import { isBabelsheetCompliantSpreadsheet } from '../lib/babelsheet-validator';
 
 const GOOGLE_ACCOUNT_SETUP_TUTORIAL_URL = 'https://github.com/TheSoftwareHouse/babelsheet2#-prerequisites';
+
+const readLineAsync = () => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+  });
+
+  return new Promise((resolve) => {
+    rl.prompt();
+    rl.on('line', (line) => {
+      rl.close();
+      resolve(line);
+    });
+  });
+};
 
 export const initCommand: Command = {
   name: 'init',
@@ -237,16 +252,33 @@ async function handler() {
   let spreadsheetUrl: string;
 
   if (!existingSpreadsheet) {
-    console.log('Creating Google Spreadsheet...');
-    const googleSpreadsheetResponse = await createBabelsheet({
-      auth,
-      languages,
-      maxTranslationKeyLevel: answers.maxLevels,
-      includeManual: answers.includeManual,
-      includeExample: answers.example,
-      exampleRows: babelsheetConfigState?.boilerplateConfig?.exampleRows,
-      title: answers.title,
-    });
+    const googleSpreadsheetResponse = await retryOnErrorLoop(
+      async () => {
+        console.log('Creating Google Spreadsheet...');
+        return createBabelsheet({
+          auth,
+          languages,
+          maxTranslationKeyLevel: answers.maxLevels,
+          includeManual: answers.includeManual,
+          includeExample: answers.example,
+          exampleRows: babelsheetConfigState?.boilerplateConfig?.exampleRows,
+          title: answers.title,
+        });
+      },
+      async (error) => {
+        if (error.errors[0].reason === 'accessNotConfigured') {
+          console.log('⚠️ Google Sheets API needs to be enabled.');
+          console.log(`Please go to: https://console.developers.google.com/apis/library/sheets.googleapis.com?project=${auth.projectId} and click "ENABLE" button.`);
+          console.log('Then, please go back to the CLI and press enter to continue.');
+
+          await readLineAsync();
+
+          return;
+        }
+
+        throw error;
+      },
+    );
 
     if (
       !googleSpreadsheetResponse.data.spreadsheetId
@@ -257,14 +289,31 @@ async function handler() {
     spreadsheetId = googleSpreadsheetResponse.data.spreadsheetId;
     spreadsheetUrl = googleSpreadsheetResponse.data.spreadsheetUrl;
 
-    console.log(`Sharing Spreadsheet with ${answers.email}...`);
-    await shareFileWithEmail({
-      auth,
-      role: 'writer',
-      email: answers.email,
-      fileId: spreadsheetId,
-      sendNotificationEmail: true,
-    });
+    await retryOnErrorLoop(
+      async () => {
+        console.log(`Sharing Spreadsheet with ${answers.email}...`);
+        await shareFileWithEmail({
+          auth,
+          role: 'writer',
+          email: answers.email,
+          fileId: spreadsheetId,
+          sendNotificationEmail: true,
+        });
+      },
+      async (error) => {
+        if (error.errors[0].reason === 'accessNotConfigured') {
+          console.log('⚠️ Drive API needs to be enabled.');
+          console.log(`Please go to: https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${auth.projectId} and click "ENABLE" button.`);
+          console.log('Then, please go back to the CLI and press enter to continue.');
+
+          await readLineAsync();
+
+          return;
+        }
+
+        throw error;
+      },
+    );
   } else {
     spreadsheetUrl = existingSpreadsheet.length === 44
       ? `https://docs.google.com/spreadsheets/d/${existingSpreadsheet}`
@@ -302,4 +351,21 @@ async function handler() {
   console.log('\n🎉 Babelsheet has been successfully initialized! 🎉\n');
   console.log(`📝 Translation spreadsheet is available here: ${spreadsheetUrl}`);
   console.log(`💻 To fetch the translations type: "npm run ${answers.scriptName}"`);
+}
+
+async function retryOnErrorLoop<T>( //
+  task: () => Promise<T>,
+  // eslint-disable-next-line no-unused-vars
+  errorHandler: (error: any) => Promise<void>,
+) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return await task();
+    } catch (error: any) {
+      // eslint-disable-next-line no-await-in-loop
+      await errorHandler(error);
+    }
+  }
 }
