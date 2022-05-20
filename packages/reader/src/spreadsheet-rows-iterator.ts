@@ -38,7 +38,7 @@ export async function* spreadsheetRowsIterator({
       endRowIndex,
     });
 
-    for (let y = 0; y < endRowIndex; ++y) {
+    for (let y = startRowIndex; y < endRowIndex; ++y) {
       const row: Row = [];
 
       for (let x = 0; x < endColumnIndex; ++x) {
