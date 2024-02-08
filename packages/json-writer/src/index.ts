@@ -1,8 +1,8 @@
+import { promises as fs } from 'fs';
+import { setWith } from 'lodash';
+import * as fsPath from 'path';
 import { Observable } from 'rxjs';
 import { mergeMap, reduce } from 'rxjs/operators';
-import setWith from 'lodash.setwith';
-import { promises as fs } from 'fs';
-import * as fsPath from 'path';
 
 export type TranslationJsonEntry = {
   path: string | string[];

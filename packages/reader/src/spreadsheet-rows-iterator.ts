@@ -1,12 +1,14 @@
-import { GoogleSpreadsheet, ServiceAccountCredentials } from 'google-spreadsheet';
+import { JWT, JWTInput } from 'google-auth-library';
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import type { GoogleSpreadsheetCellErrorValue } from "google-spreadsheet"
 
 export type SpreadsheetSourceConfig = {
   spreadsheetId: string;
   sheetIndex?: number;
-  credentials: ServiceAccountCredentials;
+  credentials: JWTInput;
 };
 
-export type CellValue = string | number | boolean | null;
+export type CellValue = string | number | boolean | null | GoogleSpreadsheetCellErrorValue;
 
 export type Row = CellValue[];
 
@@ -17,9 +19,12 @@ export async function* spreadsheetRowsIterator({
   sheetIndex = 0,
   credentials,
 }: SpreadsheetSourceConfig) {
-  const document = new GoogleSpreadsheet(spreadsheetId);
+  const document = new GoogleSpreadsheet(spreadsheetId, new JWT({
+    email: credentials.client_email,
+    key: credentials.private_key,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  }));
 
-  await document.useServiceAccountAuth(credentials);
   await document.loadInfo();
 
   const sheet = document.sheetsByIndex[sheetIndex];
