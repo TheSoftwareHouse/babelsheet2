@@ -1,11 +1,16 @@
-import { JWT, JWTInput } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
+import type { GoogleSpreadsheetCellErrorValue } from "google-spreadsheet";
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import type { GoogleSpreadsheetCellErrorValue } from "google-spreadsheet"
+
+export type Credentials = {
+  client_email?: string;
+  private_key?: string;
+}
 
 export type SpreadsheetSourceConfig = {
   spreadsheetId: string;
   sheetIndex?: number;
-  credentials: JWTInput;
+  credentials: Credentials;
 };
 
 export type CellValue = string | number | boolean | null | GoogleSpreadsheetCellErrorValue;
