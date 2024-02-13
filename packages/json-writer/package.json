@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2-json-writer",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Babelsheet2 JSON file writer",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
