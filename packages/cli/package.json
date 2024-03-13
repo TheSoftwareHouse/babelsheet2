@@ -20,7 +20,7 @@
     "i18n"
   ],
   "dependencies": {
-    "babelsheet2-reader": "^0.0.7",
+    "babelsheet2-reader": "^0.0.8",
     "googleapis": "^92.0.0",
     "inquirer": "^8.2.0",
     "open": "^8.4.0",
