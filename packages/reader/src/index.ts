@@ -11,8 +11,10 @@ import {
   mergeMap,
   mergeAll,
 } from 'rxjs/operators';
+import { csvRowsIterator } from './csv-rows-iterator';
+import { FromBabelsheetConfig } from './types';
 import {
-  CellValue, Row, spreadsheetRowsIterator, SpreadsheetSourceConfig,
+  CellValue, Row, spreadsheetRowsIterator,
 } from './spreadsheet-rows-iterator';
 
 export type TranslationEntry = {
@@ -24,11 +26,16 @@ export type TranslationEntry = {
 
 const END_AFTER_EMPTY_ROWS_COUNT = 10;
 
+export { FromBabelsheetConfig };
+
 // eslint-disable-next-line operator-linebreak
 export const fromBabelsheet = //
-  (config: SpreadsheetSourceConfig): Observable<TranslationEntry> => defer(
+  (config: FromBabelsheetConfig): Observable<TranslationEntry> => defer(
     async () => {
-      const rowsIterator = spreadsheetRowsIterator(config);
+      const { isUsingCsvExport, ...commonConfig } = config;
+      const rowsIterator = isUsingCsvExport
+        ? csvRowsIterator(commonConfig)
+        : spreadsheetRowsIterator(commonConfig);
 
       // Header row parsing
       let headerRow: Row;

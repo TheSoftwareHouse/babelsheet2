@@ -1,11 +1,7 @@
 import { JWT } from 'google-auth-library';
-import type { GoogleSpreadsheetCellErrorValue } from "google-spreadsheet";
+import type { GoogleSpreadsheetCellErrorValue } from 'google-spreadsheet';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-
-export type Credentials = {
-  client_email?: string;
-  private_key?: string;
-}
+import { Credentials } from './types';
 
 export type SpreadsheetSourceConfig = {
   spreadsheetId: string;
@@ -27,7 +23,7 @@ export async function* spreadsheetRowsIterator({
   const document = new GoogleSpreadsheet(spreadsheetId, new JWT({
     email: credentials.client_email,
     key: credentials.private_key,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   }));
 
   await document.loadInfo();
