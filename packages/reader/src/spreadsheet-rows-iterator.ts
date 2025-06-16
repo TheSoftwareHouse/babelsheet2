@@ -6,6 +6,7 @@ import { Credentials } from './types';
 export type SpreadsheetSourceConfig = {
   spreadsheetId: string;
   sheetIndex?: number;
+  batchSize?: number;
   credentials: Credentials;
 };
 
@@ -13,11 +14,12 @@ export type CellValue = string | number | boolean | null | GoogleSpreadsheetCell
 
 export type Row = CellValue[];
 
-const ROWS_BATCH_SIZE = 50;
+const DEFAULT_ROWS_BATCH_SIZE = 50;
 
 export async function* spreadsheetRowsIterator({
   spreadsheetId,
   sheetIndex = 0,
+  batchSize = DEFAULT_ROWS_BATCH_SIZE,
   credentials,
 }: SpreadsheetSourceConfig) {
   const document = new GoogleSpreadsheet(spreadsheetId, new JWT({
@@ -29,11 +31,11 @@ export async function* spreadsheetRowsIterator({
   await document.loadInfo();
 
   const sheet = document.sheetsByIndex[sheetIndex];
-  const totalPages = Math.ceil(sheet.rowCount / ROWS_BATCH_SIZE);
+  const totalPages = Math.ceil(sheet.rowCount / batchSize);
 
   for (let page = 0; page < totalPages; ++page) {
-    const startRowIndex = page * ROWS_BATCH_SIZE;
-    const endRowIndex = Math.min((page + 1) * ROWS_BATCH_SIZE, sheet.rowCount);
+    const startRowIndex = page * batchSize;
+    const endRowIndex = Math.min((page + 1) * batchSize, sheet.rowCount);
     const endColumnIndex = sheet.columnCount - 1;
 
     // eslint-disable-next-line no-await-in-loop

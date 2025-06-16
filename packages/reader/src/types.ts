@@ -5,6 +5,7 @@ export type Credentials = {
 
 type UsingSheetsAPI = {
   sheetIndex?: number;
+  batchSize?: number;
   /** @experimental */
   isUsingCsvExport?: false;
 }
