@@ -1,6 +1,6 @@
 {
   "name": "babelsheet2-reader",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Rx.js observable that parses Babelsheet-formatted Google Spreadsheet",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
